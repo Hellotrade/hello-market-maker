@@ -1,0 +1,84 @@
+# HELLO basic market maker
+# Exchange KPIs: spread <= 2%, at least $2,500 of orders on each side within +/-2% of mid.
+
+name: HELLO MM
+mode: paper              # paper | live   (use `python -m mm sim` for offline simulation)
+refresh_seconds: 5
+balance_every_ticks: 3
+manual_reference_price: null   # only used if no venue gives a price (e.g. first listing day)
+data_dir: data
+
+venues:
+  mexc:
+    enabled: true
+    ccxt_id: mexc
+    symbol: HELLO/USDT
+    weight: 1.0
+    maker_fee: null      # null = use exchange-reported fee. Set 0.0 once the MM program is active.
+    taker_fee: null
+    paper_base: 4800000  # paper/sim starting balances: ~$12k of HELLO at $0.0025 ...
+    paper_quote: 12000   # ... plus $12k USDT. Sim shows half of this is not enough.
+  bybit:
+    enabled: false     # HELLO is not listed on Bybit yet. Same setup works for SUPRA/USDT.
+    ccxt_id: bybit
+    symbol: HELLO/USDT
+    weight: 1.0
+    maker_fee: null
+    taker_fee: null
+    paper_base: 4800000
+    paper_quote: 12000
+  gate:
+    enabled: true
+    ccxt_id: gate
+    symbol: HELLO/USDT
+    weight: 1.0
+    maker_fee: null
+    taker_fee: null
+    paper_base: 4800000
+    paper_quote: 12000
+
+kpi:
+  max_spread_pct: 2.0
+  depth_band_pct: 2.0
+  min_depth_usd: 2500
+  uptime_target_pct: 95
+
+quoting:
+  target_spread_pct: 1.0     # normal quoted spread, half the allowed max
+  wide_spread_pct: 1.8       # in volatile markets
+  levels: 5                  # levels per side inside the +/-2% band
+  depth_safety_factor: 1.6   # quote $4,000 per side so a single fill can't break the $2,500 KPI
+  band_margin: 0.9
+  outer_offsets_pct: [3.0, 5.0]
+  outer_level_usd: 400
+  price_tolerance_pct: 0.15
+  size_tolerance_pct: 25
+  post_only: true
+
+inventory:
+  target_base_ratio: 0.5
+  max_price_skew_pct: 1.0   # lean quotes up to 1% against inventory so it rebalances by itself
+  size_skew: 0.5
+
+risk:
+  max_drawdown_pct: 20
+  vol_window_seconds: 60
+  vol_move_pct: 6
+  halt_move_pct: 25
+  stale_seconds: 30
+  outlier_pct: 5
+  quote_reserve: 50
+  base_reserve_usd: 50
+  kill_file: KILL
+  noncompliant_alert_ticks: 6
+
+arbitrage:
+  enabled: false             # switch on after a week of stable quoting
+  min_edge_pct: 0.6
+  max_trade_usd: 250
+  cooldown_seconds: 30
+
+alerts:
+  telegram_bot_token_env: TELEGRAM_BOT_TOKEN
+  telegram_chat_id_env: TELEGRAM_CHAT_ID
+  dedupe_seconds: 600
